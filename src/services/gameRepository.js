@@ -1,48 +1,92 @@
-import { starterGames } from '../data/starterGames';
+
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore';
+
+import { db } from './firebaseConfig';
 
 /*
-  MODULE 9 TODO FILE
-  ------------------
-  This is the main file students complete.
+  MODULE 9 — CLOUD GAME COLLECTION
 
-  The app starts in DEMO MODE with starterGames so the UI works first.
-  Replace each TODO section with Firestore code from the lesson.
+  Firebase Cloud Firestore CRUD
+  TODO 1 — READ
+  TODO 2 — CREATE
+  TODO 3 — UPDATE
+  TODO 4 — DELETE
 */
 
+// Make sure Firebase is connected
+function checkFirebase() {
+  if (!db) {
+    throw new Error(
+      'Firebase is not configured. Check your .env.local file.'
+    );
+  }
+}
+
+// TODO 1 — READ
 export async function getGames() {
-  // TODO 1 — READ
-  // Read the "games" collection from Firestore.
-  // Convert each Firestore document into:
-  // { id: doc.id, ...doc.data() }
-  // Return the final array.
+  checkFirebase();
 
-  return starterGames;
+  const gamesCollection = collection(db, 'games');
+
+  const snapshot = await getDocs(gamesCollection);
+
+  const games = snapshot.docs.map((gameDoc) => ({
+    ...gameDoc.data(),
+    id: gameDoc.id,
+  }));
+
+  return games;
 }
 
+// TODO 2 — CREATE
 export async function addGame(game) {
-  // TODO 2 — CREATE
-  // Add the supplied game object to the "games" collection.
-  // Return the new game with its Firestore document id.
+  checkFirebase();
+
+  const gamesCollection = collection(db, 'games');
+
+  const { id, ...gameData } = game;
+
+  const documentReference = await addDoc(
+    gamesCollection,
+    gameData
+  );
 
   return {
-    id: String(Date.now()),
-    ...game,
+    ...gameData,
+    id: documentReference.id,
   };
 }
 
+// TODO 3 — UPDATE
 export async function updateGame(id, changes) {
-  // TODO 3 — UPDATE
-  // Use the document id to update only the supplied fields.
+  checkFirebase();
+
+  const gameReference = doc(db, 'games', id);
+
+  const { id: ignoredId, ...updatedFields } = changes;
+
+  await updateDoc(gameReference, updatedFields);
 
   return {
+    ...updatedFields,
     id,
-    ...changes,
   };
 }
 
+// TODO 4 — DELETE
 export async function deleteGame(id) {
-  // TODO 4 — DELETE
-  // Delete the Firestore document that matches this id.
+  checkFirebase();
+
+  const gameReference = doc(db, 'games', id);
+
+  await deleteDoc(gameReference);
 
   return id;
 }
